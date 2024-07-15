@@ -94,7 +94,7 @@ class WeekDaysWidget extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  DateFormat.E().format(date), // Lundi, Mardi, etc.
+                  DateFormat.E('fr').format(date), // Lundi, Mardi, etc.
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: isToday ? Colors.teal.shade700 : Colors.black,

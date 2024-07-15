@@ -11,11 +11,17 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'models/activity.dart';
 import 'models/task.dart';
 
+//flutter//
 //flutter clean
 // flutter pub get
 // flutter run
-
 //flutter pub run build_runner build
+
+//git//
+//git status
+//git add .
+//git commit -m "Message du commit"
+//git push origin master
 
 void main() async{
   //initialisation de Hive
@@ -41,6 +47,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: IntroPage(),
+      theme: ThemeData(primarySwatch: Colors.teal
+      ),
 
     );
   }

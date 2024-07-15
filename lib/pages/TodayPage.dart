@@ -4,17 +4,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:intl/intl.dart';
 import 'package:my_daily_tasks/components/top_week_day_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
-
 
 import '../models/activity.dart';
 import '../models/task.dart';
 
 class TodayPage extends StatefulWidget {
   const TodayPage({super.key});
-
 
   @override
   State<TodayPage> createState() => _TodayPageState();
@@ -24,10 +23,11 @@ class _TodayPageState extends State<TodayPage> {
   final DateTime todayDate = DateTime.now();
 
   TextEditingController taskController = TextEditingController();
+  TextEditingController pastTaskController = TextEditingController();
+  TextEditingController startDateController = TextEditingController();
 
   final Box<Task> taskBox = Hive.box<Task>('tasks');
   final Box<Activity> activityBox = Hive.box<Activity>('activities');
-
 
   @override
   void initState() {
@@ -35,7 +35,8 @@ class _TodayPageState extends State<TodayPage> {
     print(todayDate);
     if (taskBox.isNotEmpty) {
       Task? lastTask = taskBox.getAt(taskBox.length - 1);
-      if (lastTask?.date.toString().substring(0,10) != todayDate.toString().substring(0,10)){
+      if (lastTask?.date.toString().substring(0, 10) !=
+          todayDate.toString().substring(0, 10)) {
         deleteOldNotCompletedTasks();
         addNewTodayTask();
       }
@@ -54,21 +55,18 @@ class _TodayPageState extends State<TodayPage> {
   }
 
   // à faire à chaque nouveau jour
-  void addNewTodayTask(){
+  void addNewTodayTask() {
     final activityList = activityBox.values.toList();
 
-    activityList.forEach(
-            (activity) {
-          Task newTask = Task(
-            id: Uuid().v4(),
-            name: activity.name,
-            date: todayDate,
-          );
+    activityList.forEach((activity) {
+      Task newTask = Task(
+        id: Uuid().v4(),
+        name: activity.name,
+        date: todayDate,
+      );
 
-          taskBox.add(newTask);
-        }
-    );
-
+      taskBox.add(newTask);
+    });
   }
 
   void addTask(String taskName) {
@@ -76,6 +74,16 @@ class _TodayPageState extends State<TodayPage> {
       id: Uuid().v4(),
       name: taskName,
       date: DateTime.now(),
+      isCompleted: true,
+    );
+    taskBox.add(newTask);
+  }
+
+  void addPastTask(String taskName, DateTime date) {
+    final newTask = Task(
+      id: Uuid().v4(),
+      name: taskName,
+      date: date,
       isCompleted: true,
     );
     taskBox.add(newTask);
@@ -94,9 +102,88 @@ class _TodayPageState extends State<TodayPage> {
       task.isCompleted = false;
       task.save();
     });
-
   }
 
+  Future<void> _selectDate(BuildContext context, DateTime selectedDate) async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (pickedDate != null && pickedDate != selectedDate) {
+      selectedDate = pickedDate;
+      setState(() {
+        startDateController.text = DateFormat.yMd().format(pickedDate);
+      });
+    }
+  }
+
+  Future<void> _showAddPastTaskDialog() async {
+    DateTime selectedDate = DateTime.now();
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Ajouter une tâche réalisée'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                TextField(
+                  controller: pastTaskController,
+                  decoration: const InputDecoration(hintText: "Nom de la tâche"),
+                ),
+                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: () => _selectDate(context, selectedDate),
+                  child: AbsorbPointer(
+                    child: TextField(
+                      controller: startDateController,
+                      decoration: const InputDecoration(
+                        labelText: 'Date de la tâche',
+                      ),
+                      keyboardType: TextInputType.datetime,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text(
+                  'Annuler',
+                style: TextStyle(
+                  color: Colors.teal
+                ),
+
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text(
+                  'Ajouter',
+                style: TextStyle(
+                  color: Colors.teal,
+                ),
+              ),
+              onPressed: () {
+                if (pastTaskController.text.isNotEmpty) {
+                  addPastTask(pastTaskController.text, selectedDate);
+                  pastTaskController.clear();
+                }
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,16 +194,17 @@ class _TodayPageState extends State<TodayPage> {
         elevation: 0,
         leading: Builder(
           builder: (context) => IconButton(
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-              icon: const Padding(
-                  padding: EdgeInsets.only(left: 12.0),
-                child: Icon(
-                  Icons.menu,
-                  color: Colors.black,
-                ),
-              )),
+            onPressed: () {
+              Scaffold.of(context).openDrawer();
+            },
+            icon: const Padding(
+              padding: EdgeInsets.only(left: 12.0),
+              child: Icon(
+                Icons.menu,
+                color: Colors.black,
+              ),
+            ),
+          ),
         ),
         title: const Text(
           "Aujourd'hui",
@@ -134,9 +222,9 @@ class _TodayPageState extends State<TodayPage> {
           children: [
             //logo
             DrawerHeader(
-                child: Image.asset(
-                  'lib/photos/intro.png',
-                )
+              child: Image.asset(
+                'lib/photos/intro.png',
+              ),
             )
           ],
         ),
@@ -144,151 +232,144 @@ class _TodayPageState extends State<TodayPage> {
       body: ValueListenableBuilder(
         valueListenable: taskBox.listenable(),
         builder: (context, Box<Task> box, _) {
-
           final completedTasks = box.values.where(
                 (task) =>
-                task.date?.toString().substring(0,10) ==
-                    todayDate.toString().substring(0,10) &&
-              task.isCompleted == true,
+            task.date?.toString().substring(0, 10) ==
+                todayDate.toString().substring(0, 10) &&
+                task.isCompleted == true,
           ).toList();
 
-          final availableTask = box.values.where(
-              (task) =>
-                  task.isCompleted == false
-          ).toList();
-
-
+          final availableTask = box.values
+              .where((task) => task.isCompleted == false)
+              .toList();
 
           return Column(
             children: [
-
-              const SizedBox(height: 20,),
-
+              const SizedBox(height: 20),
               WeekDaysWidget(),
-
-              const SizedBox(height: 20,),
-
-              const Text(
-                "Réalisées",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Colors.teal,
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "Réalisées",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.teal,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _showAddPastTaskDialog,
+                    icon: const Icon(Icons.add, color: Colors.teal),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: completedTasks.length,
+                  itemBuilder: (context, index) {
+                    final task = completedTasks[index];
+                    return Padding(
+                      padding:
+                      const EdgeInsets.only(left: 10, right: 10, top: 10),
+                      child: Slidable(
+                        endActionPane: ActionPane(
+                          motion: const StretchMotion(),
+                          children: [
+                            SlidableAction(
+                              onPressed: (context) {
+                                removeCompletedTask(task);
+                              },
+                              icon: Icons.keyboard_arrow_down,
+                              backgroundColor: Colors.red.shade300,
+                              borderRadius: BorderRadius.circular(10),
+                            )
+                          ],
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                              color: Colors.teal.shade500,
+                              borderRadius: BorderRadius.circular(10)),
+                          child: ListTile(
+                            title: Text(
+                              task.name,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
-
-              Expanded(
-                  child: ListView.builder(
-                      itemCount: completedTasks.length,
-                      itemBuilder: (context, index) {
-                        final task = completedTasks[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
-                          child: Slidable(
-                              endActionPane: ActionPane(
-                                motion: const StretchMotion(),
-                                children: [
-                                  SlidableAction(
-                                    onPressed: (context) {
-                                        removeCompletedTask(task);
-                                      },
-                                    icon: Icons.keyboard_arrow_down,
-                                    backgroundColor: Colors.red.shade300,
-                                    borderRadius: BorderRadius.circular(10),
-                                  )
-                                ],
-                              ),
-                              child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.teal.shade500,
-                                    borderRadius: BorderRadius.circular(10)
-                                  ),
-                                  child: ListTile(
-                                    title: Text(
-                                        task.name,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                      },
-                  ),
-              ),
-
               const SizedBox(height: 20),
-
               const Text(
                 "Activités",
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Colors.teal
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.teal),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: availableTask.length,
+                  itemBuilder: (context, index) {
+                    final task = availableTask[index];
+                    return GestureDetector(
+                      onTap: () => completeTask(task),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                        child: Card(
+                          child: ListTile(
+                            title: Text(
+                              task.name,
+                              style: const TextStyle(
+                                  color: Colors.teal,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
-
-              Expanded(
-                  child: ListView.builder(
-                    itemCount: availableTask.length,
-                    itemBuilder: (context, index) {
-                      final task = availableTask[index];
-                      return GestureDetector(
-                        onTap: () => completeTask(task),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                          child: Card(
-                              child: ListTile(
-                                title: Text(
-                                  task.name,
-                                  style: const TextStyle(
-                                    color: Colors.teal,
-                                    fontWeight: FontWeight.bold
-                                  ),
-
-                                ),
-                              )
-                          ),
-                        )
-                      );
-                    },
-                  )
-              ),
-
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+                padding: const EdgeInsets.symmetric(
+                    vertical: 10.0, horizontal: 20.0),
                 child: Row(
                   children: [
                     Expanded(
-                        child: TextField(
-                          controller: taskController,
-                          decoration: const InputDecoration(
-                            hintText: "Tâche que pour aujourd'hui",
-                          ),
-                          onSubmitted: (text) {
-                            if (text.isNotEmpty) {
-                              addTask(text);
-                            }
-                          },
-                        )
-                    ),
-                    IconButton(
-                        onPressed: () {
-                          if (taskController.text.isNotEmpty) {
-                            addTask(taskController.text);
-                            taskController.clear();
+                      child: TextField(
+                        controller: taskController,
+                        decoration: const InputDecoration(
+                          hintText: "Tâche que pour aujourd'hui",
+                        ),
+                        onSubmitted: (text) {
+                          if (text.isNotEmpty) {
+                            addTask(text);
                           }
                         },
-                        icon: const Icon(Icons.add)
-                    )
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        if (taskController.text.isNotEmpty) {
+                          addTask(taskController.text);
+                          taskController.clear();
+                        }
+                      },
+                      icon: const Icon(Icons.add),
+                    ),
                   ],
                 ),
-              )
+              ),
             ],
           );
-        }
+        },
       ),
     );
   }

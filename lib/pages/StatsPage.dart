@@ -17,7 +17,7 @@ class _StatsPageState extends State<StatsPage> {
   final Box<Activity> activityBox = Hive.box<Activity>('activities');
   final Box<Task> taskBox = Hive.box<Task>('tasks');
 
-  String selectedActivity= '';
+  String selectedActivity = '';
   String? selectedActivityName;
 
   List<Activity> allActivities = [];
@@ -34,17 +34,16 @@ class _StatsPageState extends State<StatsPage> {
     year = today.year;
   }
 
-  // calcul des jours consécutifs
   int calculateConsecutiveDays(Activity activity, List<Task> tasks) {
     if (tasks.isEmpty) return 0;
 
     final taskListReduced = taskBox.values.where(
-            (task) {
-                return task.name == activity.name &&
-                    task.isCompleted == true;
-    }).toList();
+          (task) {
+        return task.name == activity.name && task.isCompleted == true;
+      },
+    ).toList();
 
-    taskListReduced.sort((a,b) => b.date!.compareTo(a.date!));
+    taskListReduced.sort((a, b) => b.date!.compareTo(a.date!));
     int consecutiveDays = 0;
     if (taskListReduced.isNotEmpty) {
       if (taskListReduced[0].date!.day == today.day &&
@@ -52,23 +51,18 @@ class _StatsPageState extends State<StatsPage> {
           taskListReduced[0].date!.year == today.year) {
         consecutiveDays++;
         for (int i = 1; i < taskListReduced.length; i++) {
-          if (taskListReduced[i-1].date!.day
-              - taskListReduced[i].date!.day
-              == 1
-          ){
+          if (taskListReduced[i - 1].date!.day - taskListReduced[i].date!.day == 1) {
             consecutiveDays++;
           } else {
             break;
           }
         }
-      } else {}
-    } else{}
+      }
+    }
 
     return consecutiveDays;
   }
 
-
-  //calcul du pourcentage de réussite
   double calculateSuccessPercentage(Activity activity, List<Task> tasks) {
     if (activity.goalFrequency == null || activity.goalPeriod == null) return 0.0;
     int completedTasks = tasks.length;
@@ -77,9 +71,9 @@ class _StatsPageState extends State<StatsPage> {
 
     double goal;
     if (activity.goalPeriod == 'jour') {
-      goal = ((completedTasks / 30) * 100 ) / activity.goalFrequency!;
+      goal = ((completedTasks / 30) * 100) / activity.goalFrequency!;
     } else if (activity.goalPeriod == 'semaine') {
-      goal = ((completedTasks / 4) * 100 ) / activity.goalFrequency!;
+      goal = ((completedTasks / 4) * 100) / activity.goalFrequency!;
     } else {
       goal = (completedTasks * 100) / activity.goalFrequency!;
     }
@@ -87,7 +81,6 @@ class _StatsPageState extends State<StatsPage> {
     return goal;
   }
 
-  // calcul du nombre de completed tasks dans un mois
   int calculateCompletedDaysInMonth(List<Task> tasks) {
     DateTime firstDayOfMonth = DateTime(today.year, today.month, 1);
     DateTime lastDayOfMonth = DateTime(today.year, today.month + 1, 0);
@@ -98,7 +91,6 @@ class _StatsPageState extends State<StatsPage> {
         .length;
   }
 
-  // calcul du nombre de completed tasks dans une année
   int calculateCompletedDaysInYear(List<Task> tasks) {
     DateTime firstDayOfYear = DateTime(today.year, 1, 1);
     DateTime lastDayOfYear = DateTime(today.year, 12, 31);
@@ -113,27 +105,22 @@ class _StatsPageState extends State<StatsPage> {
   Widget build(BuildContext context) {
     Activity? selectedActivityDetails;
 
-    if(selectedActivityName != "") {
+    if (selectedActivityName != "") {
       selectedActivityDetails = activityBox.values.firstWhere(
-          (activity) => activity.name == selectedActivityName,
-              orElse: () => Activity(
-                  id: "",
-                  name: "")
-      );
+              (activity) => activity.name == selectedActivityName,
+          orElse: () => Activity(id: "", name: ""));
     }
 
-
     final activities = activityBox.values.toList();
-    final tasks = taskBox.values.where(
-            (task) {
-              if (selectedActivityName == null) {
-                return task.isCompleted == true;
-              } else {
-                return task.name == selectedActivityName &&
-                    task.date?.month == today.month &&
-                    task.date?.year == today.year &&
-                    task.isCompleted == true;
-              }
+    final tasks = taskBox.values.where((task) {
+      if (selectedActivityName == null) {
+        return task.isCompleted == true;
+      } else {
+        return task.name == selectedActivityName &&
+            task.date?.month == today.month &&
+            task.date?.year == today.year &&
+            task.isCompleted == true;
+      }
     }).toList();
 
     return Scaffold(
@@ -142,113 +129,116 @@ class _StatsPageState extends State<StatsPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text(
-            'Statistiques',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.teal
-          ),
+          'Statistiques',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal),
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  DropdownButton<String>(
-                    hint: const Text("Sélectionner une activité"),
-                    value: selectedActivityName,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedActivityName = newValue;
-                      });
-                    },
-                    items: activities.map((activity) {
-                      return DropdownMenuItem<String>(
-                        value: activity.name,
-                        child: Text(activity.name),
-                      );
-                    }).toList(),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButton<String>(
+                          hint: const Text("Sélectionner une activité"),
+                          value: selectedActivityName,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedActivityName = newValue;
+                            });
+                          },
+                          items: activities.map((activity) {
+                            return DropdownMenuItem<String>(
+                              value: activity.name,
+                              child: Text(activity.name),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.settings),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  SettingsActivity(initialActivityName: selectedActivityName),
+                            ),
+                          );
+                        },
+                      )
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.settings),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SettingsActivity(initialActivityName: selectedActivityName),
-                        ),
-                      );
-                      },
-                  )
-              ]),
-              const SizedBox(height: 16),
-              Text(
-                "$monthName - $year",
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                  color: Colors.teal,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                height: 200,
-                child: Table(
-                  children: _buildCalendar(tasks),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Résultats',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.teal,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Center(
-                child: SizedBox(
-                  width: 310,
-                  height: 290,
-                  child: GridView.count(
-                      crossAxisCount: 2,
-                      children: [
-                        StatCard(
-                          icon: Icons.change_circle_rounded,
-                          value: calculateConsecutiveDays(selectedActivityDetails!,tasks).toString(),
-                          label: 'Consécutifs',
-                        ),
-                        StatCard(
-                          icon: Icons.check_circle_outline_outlined,
-                          value: selectedActivityDetails != null
-                              ? '${calculateSuccessPercentage(selectedActivityDetails, tasks).round()}'
-                              : '0',
-                          label: 'Réussite (%)',
-                        ),
-                        StatCard(
-                          icon: Icons.calendar_month,
-                          value:
-                          calculateCompletedDaysInMonth(tasks).toString(),
-                          label: 'dans le mois',
-                        ),
-                        StatCard(
-                          icon: Icons.calendar_today_outlined,
-                          value:
-                          calculateCompletedDaysInYear(tasks).toString(),
-                          label: "dans l'année",
-                        ),
-                      ],
+                  const SizedBox(height: 5),
+                  Text(
+                    "$monthName - $year",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Colors.teal,
                     ),
-                ),
+                  ),
+                  const SizedBox(height: 5),
+                  Container(
+                    height: constraints.maxWidth * 0.4,
+                    child: Table(
+                      children: _buildCalendar(tasks),
+                    ),
+                  ),
+                  const SizedBox(height: 25),
+                  const Text(
+                    'Résultats',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Center(
+                    child: SizedBox(
+                      width: constraints.maxWidth * 0.9,
+                      height: constraints.maxHeight * 0.45,
+                      child: GridView.count(
+                        crossAxisCount: 2,
+                        children: [
+                          StatCard(
+                            icon: Icons.change_circle_rounded,
+                            value: calculateConsecutiveDays(selectedActivityDetails!, tasks).toString(),
+                            label: 'Consécutifs',
+                          ),
+                          StatCard(
+                            icon: Icons.check_circle_outline_outlined,
+                            value: selectedActivityDetails != null
+                                ? '${calculateSuccessPercentage(selectedActivityDetails, tasks).round()}'
+                                : '0',
+                            label: 'Réussite (%)',
+                          ),
+                          StatCard(
+                            icon: Icons.calendar_month,
+                            value: calculateCompletedDaysInMonth(tasks).toString(),
+                            label: 'dans le mois',
+                          ),
+                          StatCard(
+                            icon: Icons.calendar_today_outlined,
+                            value: calculateCompletedDaysInYear(tasks).toString(),
+                            label: "dans l'année",
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              ]
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -256,7 +246,6 @@ class _StatsPageState extends State<StatsPage> {
   List<TableRow> _buildCalendar(List<Task> tasks) {
     final List<TableRow> rows = [];
 
-    // Header row - jour de la semaine
     rows.add(
       TableRow(
         children: List.generate(7, (index) {
@@ -270,7 +259,6 @@ class _StatsPageState extends State<StatsPage> {
       ),
     );
 
-    // Days of the month
     int daysInMonth = DateUtils.getDaysInMonth(today.year, today.month);
     int firstDayOfMonth = DateTime(today.year, today.month, 1).weekday;
 
@@ -285,7 +273,7 @@ class _StatsPageState extends State<StatsPage> {
       dayWidgets.add(
         Center(
           child: Container(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(5.0),
             decoration: BoxDecoration(
               color: hasTask ? Colors.tealAccent : null,
               shape: BoxShape.circle,
@@ -304,7 +292,6 @@ class _StatsPageState extends State<StatsPage> {
         rows.add(TableRow(children: dayWidgets));
         dayWidgets = [];
       }
-
     }
 
     if (dayWidgets.isNotEmpty) {

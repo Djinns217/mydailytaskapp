@@ -13,13 +13,9 @@ class SettingsActivity extends StatefulWidget {
 }
 
 class _SettingsActivityState extends State<SettingsActivity> {
-  // liste des activités
   final Box<Activity> activityBox = Hive.box<Activity>('activities');
 
-  // filtre de l'activity
   String? selectedActivityName;
-
-  // modification d'une activité
   TextEditingController categoryController = TextEditingController();
   TextEditingController startDateController = TextEditingController();
   TextEditingController goalFrequencyController = TextEditingController();
@@ -53,6 +49,20 @@ class _SettingsActivityState extends State<SettingsActivity> {
     }
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null) {
+      setState(() {
+        startDateController.text = DateFormat.yMd().format(picked);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final activities = activityBox.values.toList();
@@ -63,7 +73,7 @@ class _SettingsActivityState extends State<SettingsActivity> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text(
-            'Paramètres de l\'activité',
+          'Paramètres de l\'activité',
           style: TextStyle(
             color: Colors.teal,
             fontWeight: FontWeight.bold,
@@ -100,12 +110,17 @@ class _SettingsActivityState extends State<SettingsActivity> {
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: startDateController,
-              decoration: const InputDecoration(
-                labelText: 'Date de début (MM/JJ/AAAA)',
+            GestureDetector(
+              onTap: () => _selectDate(context),
+              child: AbsorbPointer(
+                child: TextField(
+                  controller: startDateController,
+                  decoration: const InputDecoration(
+                    labelText: 'Date de début (MM/JJ/AAAA)',
+                  ),
+                  keyboardType: TextInputType.datetime,
+                ),
               ),
-              keyboardType: TextInputType.datetime,
             ),
             const SizedBox(height: 16),
             TextField(
@@ -135,7 +150,7 @@ class _SettingsActivityState extends State<SettingsActivity> {
             ElevatedButton(
               onPressed: saveActivityDetails,
               child: const Text(
-                  'Enregistrer',
+                'Enregistrer',
                 style: TextStyle(
                   color: Colors.teal,
                 ),
