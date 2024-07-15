@@ -35,23 +35,38 @@ class _StatsPageState extends State<StatsPage> {
   }
 
   // calcul des jours consécutifs
-  int calculateConsecutiveDays(List<Task> tasks) {
+  int calculateConsecutiveDays(Activity activity, List<Task> tasks) {
     if (tasks.isEmpty) return 0;
 
-    tasks.sort((a, b) => a.date!.compareTo(b.date!));
-    int consecutiveDays = 1;
-    for (int i = 1; i < tasks.length; i++) {
-      if (tasks[i].date!
-          .difference(tasks[i - 1].date!)
-          .inDays ==
-          1) {
+    final taskListReduced = taskBox.values.where(
+            (task) {
+                return task.name == activity.name &&
+                    task.isCompleted == true;
+    }).toList();
+
+    taskListReduced.sort((a,b) => b.date!.compareTo(a.date!));
+    int consecutiveDays = 0;
+    if (taskListReduced.isNotEmpty) {
+      if (taskListReduced[0].date!.day == today.day &&
+          taskListReduced[0].date!.month == today.month &&
+          taskListReduced[0].date!.year == today.year) {
         consecutiveDays++;
-      } else {
-        break;
-      }
-    }
+        for (int i = 1; i < taskListReduced.length; i++) {
+          if (taskListReduced[i-1].date!.day
+              - taskListReduced[i].date!.day
+              == 1
+          ){
+            consecutiveDays++;
+          } else {
+            break;
+          }
+        }
+      } else {}
+    } else{}
+
     return consecutiveDays;
   }
+
 
   //calcul du pourcentage de réussite
   double calculateSuccessPercentage(Activity activity, List<Task> tasks) {
@@ -109,13 +124,16 @@ class _StatsPageState extends State<StatsPage> {
 
 
     final activities = activityBox.values.toList();
-    final tasks = taskBox.values.where((task) {
-      return selectedActivityName == null ||
-          (task.name == selectedActivityName &&
-              task.date?.month == today.month &&
-              task.date?.year == today.year &&
-              task.isCompleted == true
-          );
+    final tasks = taskBox.values.where(
+            (task) {
+              if (selectedActivityName == null) {
+                return task.isCompleted == true;
+              } else {
+                return task.name == selectedActivityName &&
+                    task.date?.month == today.month &&
+                    task.date?.year == today.year &&
+                    task.isCompleted == true;
+              }
     }).toList();
 
     return Scaffold(
@@ -202,7 +220,7 @@ class _StatsPageState extends State<StatsPage> {
                       children: [
                         StatCard(
                           icon: Icons.change_circle_rounded,
-                          value: calculateConsecutiveDays(tasks).toString(),
+                          value: calculateConsecutiveDays(selectedActivityDetails!,tasks).toString(),
                           label: 'Consécutifs',
                         ),
                         StatCard(

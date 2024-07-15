@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -104,6 +105,19 @@ class _TodayPageState extends State<TodayPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: Builder(
+          builder: (context) => IconButton(
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+              icon: const Padding(
+                  padding: EdgeInsets.only(left: 12.0),
+                child: Icon(
+                  Icons.menu,
+                  color: Colors.black,
+                ),
+              )),
+        ),
         title: const Text(
           "Aujourd'hui",
           style: TextStyle(
@@ -112,6 +126,20 @@ class _TodayPageState extends State<TodayPage> {
           ),
         ),
         centerTitle: true,
+      ),
+      drawer: Drawer(
+        backgroundColor: Colors.amber[100],
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            //logo
+            DrawerHeader(
+                child: Image.asset(
+                  'lib/photos/intro.png',
+                )
+            )
+          ],
+        ),
       ),
       body: ValueListenableBuilder(
         valueListenable: taskBox.listenable(),
@@ -235,9 +263,9 @@ class _TodayPageState extends State<TodayPage> {
                   children: [
                     Expanded(
                         child: TextField(
-                          controller: TextEditingController(),
+                          controller: taskController,
                           decoration: const InputDecoration(
-                            hintText: "Autre",
+                            hintText: "Tâche que pour aujourd'hui",
                           ),
                           onSubmitted: (text) {
                             if (text.isNotEmpty) {
