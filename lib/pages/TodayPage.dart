@@ -21,6 +21,7 @@ class TodayPage extends StatefulWidget {
 
 class _TodayPageState extends State<TodayPage> {
   final DateTime todayDate = DateTime.now();
+  DateTime selectedDate = DateTime.now();
 
   TextEditingController taskController = TextEditingController();
   TextEditingController pastTaskController = TextEditingController();
@@ -104,7 +105,7 @@ class _TodayPageState extends State<TodayPage> {
     });
   }
 
-  Future<void> _selectDate(BuildContext context, DateTime selectedDate) async {
+  Future<void> _selectDate(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -112,15 +113,14 @@ class _TodayPageState extends State<TodayPage> {
       lastDate: DateTime.now(),
     );
     if (pickedDate != null && pickedDate != selectedDate) {
-      selectedDate = pickedDate;
       setState(() {
+        selectedDate = pickedDate;
         startDateController.text = DateFormat.yMd().format(pickedDate);
       });
     }
   }
 
   Future<void> _showAddPastTaskDialog() async {
-    DateTime selectedDate = DateTime.now();
 
     return showDialog<void>(
       context: context,
@@ -137,7 +137,7 @@ class _TodayPageState extends State<TodayPage> {
                 ),
                 const SizedBox(height: 20),
                 GestureDetector(
-                  onTap: () => _selectDate(context, selectedDate),
+                  onTap: () => _selectDate(context),
                   child: AbsorbPointer(
                     child: TextField(
                       controller: startDateController,

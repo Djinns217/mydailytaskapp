@@ -204,7 +204,7 @@ class _StatsPageState extends State<StatsPage> {
                   Center(
                     child: SizedBox(
                       width: constraints.maxWidth * 0.9,
-                      height: constraints.maxHeight * 0.45,
+                      height: constraints.maxHeight * 0.55,
                       child: GridView.count(
                         crossAxisCount: 2,
                         children: [
