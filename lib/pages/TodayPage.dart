@@ -6,6 +6,7 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:intl/intl.dart';
 import 'package:my_daily_tasks/components/top_week_day_widget.dart';
+import 'package:my_daily_tasks/pages/ProfilPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -218,14 +219,41 @@ class _TodayPageState extends State<TodayPage> {
       drawer: Drawer(
         backgroundColor: Colors.amber[100],
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             //logo
             DrawerHeader(
               child: Image.asset(
                 'lib/photos/intro.png',
               ),
-            )
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(25.0),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfilPage(),
+                    ),
+                  );
+                },
+                child: const ListTile(
+                    leading: Icon(
+                      Icons.person_outline_rounded,
+                      color: Colors.teal,
+                    ),
+                    title: Text(
+                      'Profil',
+                      style: TextStyle(
+                        color: Colors.teal,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+              ),
+            ),
           ],
         ),
       ),
