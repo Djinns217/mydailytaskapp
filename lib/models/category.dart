@@ -5,7 +5,7 @@ part 'category.g.dart' ; //Référence au fichier généré
 
 @HiveType(typeId: 2)
 
-class Task extends HiveObject{
+class Category extends HiveObject{
   @HiveField(0)
   String? id;
 
@@ -15,9 +15,18 @@ class Task extends HiveObject{
   @HiveField(2)
   int? value;
 
-  Task({
+  Category({
     required this.id,
     required this.name,
-    this.value,
+    this.value = 0,
   });
+
+  void setValue(int newValue) {
+    if (newValue >= 0 && newValue <= 10) {
+      value = newValue;
+      save();
+    } else {
+      throw RangeError("La valeur doit être dans 0 et 10");
+    }
+  }
 }

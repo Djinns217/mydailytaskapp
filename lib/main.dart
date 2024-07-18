@@ -10,6 +10,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'models/activity.dart';
 import 'models/task.dart';
+import 'models/category.dart';
 
 //flutter//
 //flutter clean
@@ -32,9 +33,12 @@ void main() async{
 
   Hive.registerAdapter(ActivityAdapter());
   Hive.registerAdapter(TaskAdapter());
+  Hive.registerAdapter(CategoryAdapter());
 
+  await Hive.openBox<Category>('categories');
   await Hive.openBox<Activity>('activities');
   await Hive.openBox<Task>('tasks');
+
 
   await initializeDateFormatting('fr', null);
 

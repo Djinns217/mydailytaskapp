@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_daily_tasks/components/profilCard.dart';
+import 'package:my_daily_tasks/pages/CategoryPage.dart';
 import 'package:my_daily_tasks/pages/Profil_IdentityPage.dart';
 
 class ProfilPage extends StatefulWidget {
@@ -56,7 +57,7 @@ class _ProfilPageState extends State<ProfilPage> {
                 ProfilCard(
                     icon: Icons.settings_suggest,
                     label: 'Catégories',
-                    route: IdentityPage()),
+                    route: CategoryPage()),
                 ProfilCard(
                     icon: Icons.task_alt,
                     label: 'Activités',

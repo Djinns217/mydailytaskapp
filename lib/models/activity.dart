@@ -27,7 +27,7 @@ class Activity extends HiveObject{
   Activity({
     required this.id,
     required this.name,
-    this.category,
+    this.category ="",
     this.startDate,
     this.goalFrequency,
     this.goalPeriod,

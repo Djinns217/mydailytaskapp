@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import '../models/activity.dart';
+import '../models/category.dart';
 
 class SettingsActivity extends StatefulWidget {
   final String? initialActivityName;
@@ -14,9 +15,10 @@ class SettingsActivity extends StatefulWidget {
 
 class _SettingsActivityState extends State<SettingsActivity> {
   final Box<Activity> activityBox = Hive.box<Activity>('activities');
+  final Box<Category> categoryBox = Hive.box<Category>('categories');
 
   String? selectedActivityName;
-  TextEditingController categoryController = TextEditingController();
+  String? selectedCategoryName;
   TextEditingController startDateController = TextEditingController();
   TextEditingController goalFrequencyController = TextEditingController();
   String? selectedGoalPeriod;
@@ -31,17 +33,21 @@ class _SettingsActivityState extends State<SettingsActivity> {
   }
 
   void loadActivityDetails(String activityName) {
-    final activity = activityBox.values.firstWhere((activity) => activity.name == activityName);
-    categoryController.text = activity.category ?? '';
-    startDateController.text = activity.startDate != null ? DateFormat.yMd().format(activity.startDate!) : '';
+    final activity = activityBox.values.firstWhere((activity) =>
+    activity.name == activityName);
+    selectedCategoryName = activity.category;
+    startDateController.text = activity.startDate != null
+        ? DateFormat.yMd().format(activity.startDate!)
+        : '';
     goalFrequencyController.text = activity.goalFrequency?.toString() ?? '';
     selectedGoalPeriod = activity.goalPeriod;
   }
 
   void saveActivityDetails() {
     if (selectedActivityName != null) {
-      final activity = activityBox.values.firstWhere((activity) => activity.name == selectedActivityName);
-      activity.category = categoryController.text;
+      final activity = activityBox.values.firstWhere((activity) =>
+      activity.name == selectedActivityName);
+      activity.category = selectedCategoryName ?? "";
       activity.startDate = DateFormat.yMd().parse(startDateController.text);
       activity.goalFrequency = int.tryParse(goalFrequencyController.text);
       activity.goalPeriod = selectedGoalPeriod;
@@ -66,6 +72,17 @@ class _SettingsActivityState extends State<SettingsActivity> {
   @override
   Widget build(BuildContext context) {
     final activities = activityBox.values.toList();
+    final categories = categoryBox.values.toList();
+
+    // Ensure selectedActivityName and selectedCategoryName are valid
+    if (selectedActivityName != null &&
+        !activities.any((activity) => activity.name == selectedActivityName)) {
+      selectedActivityName = null;
+    }
+    if (selectedCategoryName != null &&
+        !categories.any((category) => category.name == selectedCategoryName)) {
+      selectedCategoryName = null;
+    }
 
     return Scaffold(
       backgroundColor: Colors.amber[100],
@@ -92,7 +109,9 @@ class _SettingsActivityState extends State<SettingsActivity> {
               onChanged: (String? newValue) {
                 setState(() {
                   selectedActivityName = newValue;
-                  loadActivityDetails(newValue!);
+                  if (newValue != null) {
+                    loadActivityDetails(newValue);
+                  }
                 });
               },
               items: activities.map((activity) {
@@ -103,11 +122,20 @@ class _SettingsActivityState extends State<SettingsActivity> {
               }).toList(),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: categoryController,
-              decoration: const InputDecoration(
-                labelText: 'Catégorie',
-              ),
+            DropdownButton<String>(
+              hint: const Text("Sélectionner une catégorie"),
+              value: selectedCategoryName,
+              onChanged: (String? newValue) {
+                setState(() {
+                  selectedCategoryName = newValue;
+                });
+              },
+              items: categories.map((category) {
+                return DropdownMenuItem<String>(
+                  value: category.name,
+                  child: Text(category.name),
+                );
+              }).toList(),
             ),
             const SizedBox(height: 16),
             GestureDetector(
@@ -162,3 +190,4 @@ class _SettingsActivityState extends State<SettingsActivity> {
     );
   }
 }
+
